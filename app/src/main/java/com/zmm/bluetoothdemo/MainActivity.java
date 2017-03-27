@@ -5,10 +5,13 @@ import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Message;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -52,11 +55,42 @@ public class MainActivity extends AppCompatActivity {
     @InjectView(R.id.recycler_view)
     RecyclerView mRecyclerView;
     private BluetoothAdapter mBluetoothAdapter;
-    private Handler mHandler;
     private static final long SCAN_PERIOD = 10000;
     private List<BluetoothDevice> mBluetoothDeviceList;
     private MyAdapter mMyAdapter;
     private BluetoothChatService mChatService = null;
+
+    private final Handler mHandler = new Handler() {
+
+        @Override
+        public void handleMessage(Message msg) {
+            switch (msg.what)
+            {
+                case MESSAGE_STATE_CHANGE:
+                    switch (msg.arg1) {
+                        case BluetoothChatService.STATE_CONNECTED:
+                            Log.d(TAG,"---已经连接---");
+                            break;
+                        case BluetoothChatService.STATE_CONNECTING:
+                            Log.d(TAG,"---正在连接中---");
+                            break;
+                        case BluetoothChatService.STATE_LISTEN:
+                        case BluetoothChatService.STATE_NONE:
+                            Log.d(TAG,"---未连接上---");
+                            break;
+                    }
+                    break;
+
+                case MESSAGE_READ:
+                    Log.d(TAG,"---读取数据---");
+                    Bundle bundle=msg.getData();
+                    byte[] array=bundle.getByteArray("info");
+                    Log.d(TAG,"read array = "+new String(array));
+                    break;
+
+            }
+        }
+    };
 
 
 
@@ -66,7 +100,6 @@ public class MainActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
 
         ButterKnife.inject(this);
-        mHandler = new Handler();
         DisplayMetrics dm = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(dm);
         int widthPixels = dm.widthPixels;
@@ -97,7 +130,7 @@ public class MainActivity extends AppCompatActivity {
         Set<BluetoothDevice> pairedDevices = mBluetoothAdapter.getBondedDevices();
         if (pairedDevices.size() > 0) {
             for (BluetoothDevice device : pairedDevices) {
-                Log.d(TAG,"已配对："+device.getName() + "\n" + device.getAddress());
+                Log.d(TAG,"已配对：name = "+device.getName() + ",address = " + device.getAddress());
             }
         } else {
             Toast.makeText(this, "没有已配对的设备", Toast.LENGTH_SHORT).show();
@@ -113,12 +146,41 @@ public class MainActivity extends AppCompatActivity {
         this.registerReceiver(mReceiver, filter);
     }
 
-    private void bluetoothConnect(int position) {
-        BluetoothDevice device = mBluetoothDeviceList.get(position);
+    private void bluetoothConnect(final int position) {
+        if(mBluetoothAdapter.isDiscovering()){
+            mBluetoothAdapter.cancelDiscovery();
+        }
+
+        String msg = mBluetoothDeviceList.get(position).getName();
+
+        AlertDialog.Builder dialog = new AlertDialog.Builder(this);
+        dialog.setTitle("是否选择连接");
+        dialog.setMessage(msg);
+        dialog.setCancelable(false); //设置按下返回键不能消失
+        dialog.setPositiveButton("连接", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+
+                BluetoothDevice device = mBluetoothDeviceList.get(position);
+                mChatService.connect(device);
+                dialog.dismiss();
+            }
+        });
+        dialog.setNegativeButton("取消", new DialogInterface.OnClickListener() {
+
+            @Override
+            public void onClick(DialogInterface dialog, int which) {
+                dialog.dismiss();
+            }
+        });
+        dialog.show();
+
+
     }
 
 
-    @OnClick({R.id.btn_open, R.id.btn_query, R.id.btn_stop, R.id.btn_connect})
+    @OnClick({R.id.btn_open, R.id.btn_query,R.id.btn_read})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_open:
@@ -134,13 +196,14 @@ public class MainActivity extends AppCompatActivity {
                 scanLeDevice();
                 break;
 
-            case R.id.btn_stop:
-                Toast.makeText(this, "Stop Scan", Toast.LENGTH_SHORT).show();
-                break;
-            case R.id.btn_connect:
-
+            case R.id.btn_read:
+                readData();
                 break;
         }
+    }
+
+    private void readData() {
+
     }
 
     private void scanLeDevice() {
@@ -158,12 +221,12 @@ public class MainActivity extends AppCompatActivity {
             // 当发现一个新的蓝牙设备时
             if (BluetoothDevice.ACTION_FOUND.equals(action)) {
                 BluetoothDevice device = intent.getParcelableExtra(BluetoothDevice.EXTRA_DEVICE);
-                Log.d(TAG,"device name = "+device.getName()+",address = "+device.getAddress());
+                Log.d(TAG,"device 设备名称 = "+device.getName()+",设备地址 = "+device.getAddress());
                 mMyAdapter.add(device, 0);
                 mRecyclerView.scrollToPosition(0);
                 // If it's already paired, skip it, because it's been listed already
                 if (device.getBondState() != BluetoothDevice.BOND_BONDED) {
-                    Log.d(TAG,"未配对： "+ device.getName() + "\n" + device.getAddress());
+//                    Log.d(TAG,"未配对： "+ device.getName() + "\n" + device.getAddress());
 
                 }
                 // When discovery is finished, change the Activity title

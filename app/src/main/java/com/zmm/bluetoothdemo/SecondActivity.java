@@ -84,7 +84,7 @@ public class SecondActivity extends AppCompatActivity{
     }
 
 
-    @OnClick({R.id.btn_open, R.id.btn_query, R.id.btn_stop, R.id.btn_connect})
+    @OnClick({R.id.btn_open, R.id.btn_query})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_open:
@@ -98,14 +98,6 @@ public class SecondActivity extends AppCompatActivity{
                 }
                 initView();
                 scanLeDevice();
-                break;
-
-            case R.id.btn_stop:
-                Toast.makeText(this, "Stop Scan", Toast.LENGTH_SHORT).show();
-                mBluetoothAdapter.stopLeScan(mLeScanCallback);
-                break;
-            case R.id.btn_connect:
-
                 break;
         }
     }

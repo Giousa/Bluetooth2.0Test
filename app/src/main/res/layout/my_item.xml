@@ -8,9 +8,9 @@
 
     <TextView
         android:id="@+id/item_name"
-        android:layout_width="200px"
+        android:layout_width="300px"
         android:layout_height="wrap_content"
-        android:layout_marginLeft="100px"
+        android:layout_marginLeft="50px"
         android:text="Wifi"
         android:textSize="25sp"/>
 
