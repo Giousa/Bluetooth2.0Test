@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+              android:layout_width="match_parent"
+              android:layout_height="wrap_content"
+              android:orientation="horizontal"
+    android:layout_margin="40px"
+    android:background="@color/colorAccent">
+
+    <TextView
+        android:id="@+id/item_name"
+        android:layout_width="200px"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="100px"
+        android:text="Wifi"
+        android:textSize="25sp"/>
+
+    <TextView
+        android:id="@+id/item_address"
+        android:layout_width="500px"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="100px"
+        android:text="12:34:454:56"
+        android:textSize="25sp"/>
+
+
+</LinearLayout>
