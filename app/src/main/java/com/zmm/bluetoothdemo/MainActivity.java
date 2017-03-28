@@ -85,7 +85,7 @@ public class MainActivity extends AppCompatActivity {
                     Log.d(TAG,"---读取数据---");
                     Bundle bundle=msg.getData();
                     byte[] array=bundle.getByteArray("info");
-                    Log.d(TAG,"read array = "+new String(array));
+                    Log.d(TAG,"read array = "+new String(array,0,array.length));
                     break;
 
             }
@@ -180,7 +180,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @OnClick({R.id.btn_open, R.id.btn_query,R.id.btn_read})
+    @OnClick({R.id.btn_open, R.id.btn_query,R.id.btn_read,R.id.btn_write})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_open:
@@ -199,7 +199,18 @@ public class MainActivity extends AppCompatActivity {
             case R.id.btn_read:
                 readData();
                 break;
+
+            case R.id.btn_write:
+                writeData();
+                break;
         }
+    }
+
+    private void writeData() {
+        byte[] bytes = {1,9,2,8,3,7,4,5,0};
+
+//        mChatService.write(bytes);
+        mChatService.sendMessage("twsz");
     }
 
     private void readData() {

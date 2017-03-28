@@ -16,11 +16,6 @@ package com.zmm.bluetoothdemo;
  * limitations under the License.
  */
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.OutputStream;
-import java.util.UUID;
-
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothServerSocket;
@@ -31,7 +26,10 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-import com.zmm.bluetoothdemo.MainActivity;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.util.UUID;
 
 /**
  * This class does all the work for setting up and managing Bluetooth
@@ -39,7 +37,7 @@ import com.zmm.bluetoothdemo.MainActivity;
  * incoming connections, a thread for connecting with a device, and a
  * thread for performing data transmissions when connected.
  */
-public class BluetoothChatService {
+public class BluetoothChatService2 {
     // Debugging
     private static final String TAG = "BluetoothChatService";
     private static final boolean D = true;
@@ -74,7 +72,7 @@ public class BluetoothChatService {
      * @param context  The UI Activity Context
      * @param handler  A Handler to send messages back to the UI Activity
      */
-    public BluetoothChatService(Context context, Handler handler) {
+    public BluetoothChatService2(Context context, Handler handler) {
         mAdapter = BluetoothAdapter.getDefaultAdapter();
         mState = STATE_NONE;
         mHandler = handler;
@@ -259,7 +257,7 @@ public class BluetoothChatService {
                         // If a connection was accepted
                         if (socket != null) {
                             Log.d(TAG, "蓝牙Socket accept1 ok");
-                            synchronized (BluetoothChatService.this) {
+                            synchronized (BluetoothChatService2.this) {
                                 switch (mState) {
                                     case STATE_LISTEN:
                                     case STATE_CONNECTING:
@@ -285,7 +283,7 @@ public class BluetoothChatService {
                         // If a connection was accepted
                         if (socket_two != null) {
                             Log.d(TAG, "蓝牙Socket2 accept1 ok");
-                            synchronized (BluetoothChatService.this) {
+                            synchronized (BluetoothChatService2.this) {
                                 switch (mState) {
                                     case STATE_LISTEN:
                                     case STATE_CONNECTING:
@@ -311,7 +309,7 @@ public class BluetoothChatService {
                         if (socket_three != null) {
                             Log.d(TAG, "蓝牙Socket accept3 ok");
 
-                            synchronized (BluetoothChatService.this) {
+                            synchronized (BluetoothChatService2.this) {
                                 switch (mState) {
                                     case STATE_LISTEN:
                                     case STATE_CONNECTING:
@@ -337,7 +335,7 @@ public class BluetoothChatService {
                         if (socket_four != null) {
                             Log.d(TAG, "蓝牙Socket accept4 ok");
 
-                            synchronized (BluetoothChatService.this) {
+                            synchronized (BluetoothChatService2.this) {
                                 switch (mState) {
                                     case STATE_LISTEN:
                                     case STATE_CONNECTING:
@@ -426,12 +424,12 @@ public class BluetoothChatService {
                     Log.e(TAG, "unable to close() socket during connection failure", e2);
                 }
                 // Start the service over to restart listening mode
-                BluetoothChatService.this.start();
+                BluetoothChatService2.this.start();
                 return;
             }
 
             // Reset the ConnectThread because we're done
-            synchronized (BluetoothChatService.this) {
+            synchronized (BluetoothChatService2.this) {
                 mConnectThread = null;
             }
 
