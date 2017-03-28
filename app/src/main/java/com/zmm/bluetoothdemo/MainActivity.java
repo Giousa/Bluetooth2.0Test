@@ -214,7 +214,6 @@ public class MainActivity extends AppCompatActivity implements BluetoothChatServ
 
     private void writeData() {
         byte[] bytes = {1,9,2,8,3,7,4,5,0};
-        mChatService.write(bytes,mBluetoothDeviceList.get(0));
     }
 
     private void stop() {
@@ -257,39 +256,14 @@ public class MainActivity extends AppCompatActivity implements BluetoothChatServ
     @Override
     public void onStart() {
         super.onStart();
-        if (!mBluetoothAdapter.isEnabled()) {
-            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
-            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
-        } else {
-            if (mChatService == null) {
-                mChatService = new BluetoothChatService(this, mHandler);
-            }
-        }
-    }
-
-
-    @Override
-    public synchronized void onResume()
-    {
-        super.onResume();
-        // Performing this check in onResume() covers the case in which BT was
-        // not enabled during onStart(), so we were paused to enable it...
-        // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
-        if(mDeviceHashMap != null && mDeviceHashMap.size()>0){
-            mDeviceHashMap.clear();
-        }
-        mDeviceHashMap = new HashMap<>();
-
-        if (mChatService != null)
-        {
-            // Only if the state is STATE_NONE, do we know that we haven't started already
-            if (mChatService.getState() == BluetoothChatService.STATE_NONE)
-            {
-                // Start the Bluetooth chat services
-                mChatService.start();
-                mChatService.setOnReadBluetoothListener(this);
-            }
-        }
+//        if (!mBluetoothAdapter.isEnabled()) {
+//            Intent enableIntent = new Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE);
+//            startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
+//        } else {
+//            if (mChatService == null) {
+//                mChatService = new BluetoothChatService(this, mHandler);
+//            }
+//        }
     }
 
     private void openBlueTooth() {
@@ -303,16 +277,30 @@ public class MainActivity extends AppCompatActivity implements BluetoothChatServ
             startActivityForResult(enableIntent, REQUEST_ENABLE_BT);
         }
 
-        if (mChatService == null) {
-            mChatService = new BluetoothChatService(this, mHandler);
+        if(mDeviceHashMap != null && mDeviceHashMap.size()>0){
+            mDeviceHashMap.clear();
         }
+        mDeviceHashMap = new HashMap<>();
 
+//        if (mChatService != null) {
+//            // Only if the state is STATE_NONE, do we know that we haven't started already
+//            if (mChatService.getState() == BluetoothChatService.STATE_NONE) {
+//                // Start the Bluetooth chat services
+//                mChatService.start();
+//                mChatService.setOnReadBluetoothListener(this);
+//            }
+//        }
 
     }
 
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         if (requestCode == REQUEST_ENABLE_BT) {
             Log.d(TAG, "---蓝牙已开启---");
+            if (mChatService == null) {
+                mChatService = new BluetoothChatService(this, mHandler);
+                mChatService.start();
+                mChatService.setOnReadBluetoothListener(this);
+            }
         }
     }
     @Override
