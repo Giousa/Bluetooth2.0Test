@@ -3,6 +3,7 @@ package com.zmm.bluetoothdemo;
 import android.bluetooth.BluetoothAdapter;
 import android.bluetooth.BluetoothDevice;
 import android.bluetooth.BluetoothManager;
+import android.bluetooth.BluetoothSocket;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.DialogInterface;
@@ -20,7 +21,10 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Toast;
 
+import java.io.IOException;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -32,7 +36,7 @@ import butterknife.OnClick;
 /**
  * 蓝牙2.0 搜索、连接
  */
-public class MainActivity extends AppCompatActivity {
+public class MainActivity extends AppCompatActivity implements BluetoothChatService.OnReadBluetoothListener {
 
     private static String TAG = MainActivity.class.getSimpleName();
     private static final UUID MY_UUID = UUID.fromString("fa87c0d0-afac-11de-8a39-0800200c9a66");
@@ -59,6 +63,8 @@ public class MainActivity extends AppCompatActivity {
     private List<BluetoothDevice> mBluetoothDeviceList;
     private MyAdapter mMyAdapter;
     private BluetoothChatService mChatService = null;
+    private HashMap<BluetoothDevice,BluetoothSocket> mDeviceHashMap;
+
 
     private final Handler mHandler = new Handler() {
 
@@ -180,7 +186,7 @@ public class MainActivity extends AppCompatActivity {
     }
 
 
-    @OnClick({R.id.btn_open, R.id.btn_query,R.id.btn_read,R.id.btn_write})
+    @OnClick({R.id.btn_open, R.id.btn_query,R.id.btn_stop,R.id.btn_write})
     public void onClick(View view) {
         switch (view.getId()) {
             case R.id.btn_open:
@@ -196,8 +202,8 @@ public class MainActivity extends AppCompatActivity {
                 scanLeDevice();
                 break;
 
-            case R.id.btn_read:
-                readData();
+            case R.id.btn_stop:
+                stop();
                 break;
 
             case R.id.btn_write:
@@ -208,12 +214,10 @@ public class MainActivity extends AppCompatActivity {
 
     private void writeData() {
         byte[] bytes = {1,9,2,8,3,7,4,5,0};
-
-//        mChatService.write(bytes);
-        mChatService.sendMessage("twsz");
+        mChatService.write(bytes,mBluetoothDeviceList.get(0));
     }
 
-    private void readData() {
+    private void stop() {
 
     }
 
@@ -263,6 +267,7 @@ public class MainActivity extends AppCompatActivity {
         }
     }
 
+
     @Override
     public synchronized void onResume()
     {
@@ -270,6 +275,11 @@ public class MainActivity extends AppCompatActivity {
         // Performing this check in onResume() covers the case in which BT was
         // not enabled during onStart(), so we were paused to enable it...
         // onResume() will be called when ACTION_REQUEST_ENABLE activity returns.
+        if(mDeviceHashMap != null && mDeviceHashMap.size()>0){
+            mDeviceHashMap.clear();
+        }
+        mDeviceHashMap = new HashMap<>();
+
         if (mChatService != null)
         {
             // Only if the state is STATE_NONE, do we know that we haven't started already
@@ -277,6 +287,7 @@ public class MainActivity extends AppCompatActivity {
             {
                 // Start the Bluetooth chat services
                 mChatService.start();
+                mChatService.setOnReadBluetoothListener(this);
             }
         }
     }
@@ -318,4 +329,9 @@ public class MainActivity extends AppCompatActivity {
         this.unregisterReceiver(mReceiver);
     }
 
+    @Override
+    public void onReadBluetooth(BluetoothSocket socket, BluetoothDevice device, byte[] bytes) {
+        Log.d(TAG,"socket = "+socket+",devcie = "+device.getName()+",bytes = "+new String(bytes));
+        mDeviceHashMap.put(device,socket);
+    }
 }

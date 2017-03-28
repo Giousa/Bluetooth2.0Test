@@ -27,10 +27,10 @@
             android:text="搜索蓝牙"/>
 
         <Button
-            android:id="@+id/btn_read"
+            android:id="@+id/btn_stop"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="读取数据"/>
+            android:text="断开连接"/>
 
         <Button
             android:id="@+id/btn_write"

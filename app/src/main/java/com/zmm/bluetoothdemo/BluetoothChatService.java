@@ -31,8 +31,6 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 
-import com.zmm.bluetoothdemo.MainActivity;
-
 /**
  * This class does all the work for setting up and managing Bluetooth
  * connections with other devices. It has a thread that listens for
@@ -147,7 +145,7 @@ public class BluetoothChatService {
     public synchronized void connected(BluetoothSocket socket, BluetoothDevice device) {
         if (D) Log.d(TAG, "connected");
 
-        Log.d(TAG,"连接设备 name = "+device.getName()+",address = "+device.getAddress());
+        Log.d(TAG,"连接设备 name = "+device.getName()+",address = "+device.getAddress()+",socket = "+socket);
 
 //        // Cancel the thread that completed the connection
 //        if (mConnectThread != null) {mConnectThread.cancel(); mConnectThread = null;}
@@ -159,7 +157,7 @@ public class BluetoothChatService {
 //        if (mAcceptThread != null) {mAcceptThread.cancel(); mAcceptThread = null;}
 
         // Start the thread to manage the connection and perform transmissions
-        mConnectedThread = new ConnectedThread(socket);
+        mConnectedThread = new ConnectedThread(socket,device);
         mConnectedThread.start();
 
         // Send the name of the connected device back to the UI Activity
@@ -186,9 +184,9 @@ public class BluetoothChatService {
     /**
      * Write to the ConnectedThread in an unsynchronized manner
      * @param out The bytes to write
-     * @see ConnectedThread#write(byte[])
+     * @see ConnectedThread#write(byte[], BluetoothDevice)
      */
-    public void write(byte[] out) {
+    public void write(byte[] out,BluetoothDevice device) {
         // Create temporary object
         ConnectedThread r;
         // Synchronize a copy of the ConnectedThread
@@ -197,7 +195,7 @@ public class BluetoothChatService {
             r = mConnectedThread;
         }
         // Perform the write unsynchronized
-        r.write(out);
+        r.write(out,device);
     }
 
     /**
@@ -448,6 +446,15 @@ public class BluetoothChatService {
         }
     }
 
+    private OnReadBluetoothListener mOnReadBluetoothListener;
+
+    public interface OnReadBluetoothListener{
+        void onReadBluetooth(BluetoothSocket socket, BluetoothDevice device,byte[] bytes);
+    }
+
+    public void setOnReadBluetoothListener(OnReadBluetoothListener onReadBluetoothListener) {
+        mOnReadBluetoothListener = onReadBluetoothListener;
+    }
     /**
      * This thread runs during a connection with a remote device.
      * It handles all incoming and outgoing transmissions.
@@ -457,10 +464,12 @@ public class BluetoothChatService {
         private final BluetoothSocket mmSocket;
         private final InputStream mmInStream;
         private final OutputStream mmOutStream;
+        private BluetoothDevice mBluetoothDevice;
 
-        public ConnectedThread(BluetoothSocket socket) {
-            Log.d(TAG, "create ConnectedThread");
+        public ConnectedThread(BluetoothSocket socket, BluetoothDevice device) {
+            Log.d(TAG, "create ConnectedThread socket = "+socket+",device = "+device.getName());
             mmSocket = socket;
+            mBluetoothDevice = device;
             InputStream tmpIn = null;
             OutputStream tmpOut = null;
 
@@ -496,13 +505,12 @@ public class BluetoothChatService {
                             buf_data[i] = buffer[i];
                         }
 
+                        if(mOnReadBluetoothListener != null){
+                            mOnReadBluetoothListener.onReadBluetooth(mmSocket,mBluetoothDevice,buf_data);
+                        }
+
                         String readMsg = new String(buf_data);
                         Log.d(TAG,"bluetooth readMsg = "+readMsg);
-
-                    /*bytes = mmInStream.read(buffer);*/
-                        // Send the obtained bytes to the UI Activity
-                    /*mHandler.obtainMessage(MainActivity.MESSAGE_READ, bytes, -1, buffer)
-                            .sendToTarget();*/
 
                         Message msg = mHandler.obtainMessage();
                         msg.what = MainActivity.MESSAGE_READ;
@@ -525,12 +533,17 @@ public class BluetoothChatService {
         /**
          * Write to the connected OutStream.
          * @param buffer  The bytes to write
+         * @param device
          */
-        public void write(byte[] buffer)
+        public void write(byte[] buffer, BluetoothDevice device)
         {
             try
             {
-                mmOutStream.write(buffer);
+
+                if(mBluetoothDevice.equals(device)){
+                    mmOutStream.write(buffer);
+
+                }
                 // Share the sent message back to the UI Activity
                 mHandler.obtainMessage(MainActivity.MESSAGE_WRITE, -1, -1, buffer)
                         .sendToTarget();
@@ -546,54 +559,6 @@ public class BluetoothChatService {
                 mmSocket.close();
             } catch (IOException e) {
                 Log.e(TAG, "close() of connect socket failed", e);
-            }
-        }
-    }
-
-    public void sendMessage(String msg){
-        if (socket == null) {
-            Log.d(TAG, "socket is not connect");
-        } else {
-            try {
-                OutputStream os = socket.getOutputStream();
-                os.write(msg.getBytes());
-                Log.d(TAG, "write to outputstream success,socket");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-
-        if (socket_two == null) {
-            Log.d(TAG, "socket_two is not connect");
-        } else {
-            try {
-                OutputStream os = socket_two.getOutputStream();
-                os.write(msg.getBytes());
-                Log.d(TAG, "write to outputstream success,socket_two");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        if (socket_three == null) {
-            Log.d(TAG, "socket_three is not connect");
-        } else {
-            try {
-                OutputStream os = socket_three.getOutputStream();
-                os.write(msg.getBytes());
-                Log.d(TAG, "write to outputstream success,socket_three");
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-        if (socket_four == null) {
-            Log.d(TAG, "socket_four is not connect");
-        } else {
-            try {
-                OutputStream os = socket_four.getOutputStream();
-                os.write(msg.getBytes());
-                Log.d(TAG, "write to outputstream success,socket_four");
-            } catch (IOException e) {
-                e.printStackTrace();
             }
         }
     }
